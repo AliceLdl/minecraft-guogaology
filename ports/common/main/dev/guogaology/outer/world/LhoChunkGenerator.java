@@ -39,6 +39,7 @@ public class LhoChunkGenerator extends ChunkGenerator {
    public static final ResourceKey<Biome> LHO_VOID_BIOME = ResourceKey.create(Registries.BIOME, GuogaologyMod.id("lho_void"));
    public static final ResourceKey<Biome> LHO_EDGE_BIOME = ResourceKey.create(Registries.BIOME, GuogaologyMod.id("lho_edge"));
    public static final ResourceKey<Biome> UNDERWORLD_BIOME = ResourceKey.create(Registries.BIOME, GuogaologyMod.id("underworld"));
+   public static final ResourceKey<Biome> SHOCKED_SLUMP_BIOME = ResourceKey.create(Registries.BIOME, GuogaologyMod.id("shocked_slump_land"));
    public static final MapCodec<LhoChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(
       var0 -> var0.group(
             BiomeSource.CODEC.fieldOf("biome_source").forGetter(var0x -> var0x.delegate.getBiomeSource()),
@@ -188,11 +189,74 @@ public class LhoChunkGenerator extends ChunkGenerator {
       LhoIslandField.EdgeStats var13 = new LhoIslandField.EdgeStats();
       int var14 = LhoIslandField.applyEdgeColumns(var3, var4, var5, var1.getHeight(), var6.surface(), var11, var12, var8, this::blockStateOf, 6, var13);
 
+      // 第三遍：震惊瘫坐之地（shocked_slump_land）的「局部海平面/盆地注水」。
+      // 判据（照只读普查 gw_flood_probe.py 确定、并已由用户批准）：
+      //   * quart 群系预筛（按海床顶面那一格的真实群系 == shocked_slump_land 才处理）；
+      //   * 扫顶得列高 h；仅 h < FLOOD_LEVEL(=38) 的列注水到 Y=38，海床顶面换沙/沙砾；
+      //   * 边界防漏：8 邻域里非本群系邻列要求列高 ≥ 38；邻列高度读不到 ⇒ 放弃该列
+      //     —— 逐列纯函数（坐标+种子），没有跨区块可变状态 ⇒ 不出接缝。
+      // ⚠️ 复用上面同一个 columnSink(var8) ⇒ 全类仍只有一处 setBlockState（既有审计断言保持绿）。
+      //    非本群系的列一个方块都不写（SlumpWaterField.apply 的结构性保证）。
+      LhoIslandField.ColumnTop var15 = new LhoIslandField.ColumnTop() {
+         @Override
+         public int top(int var1x, int var2x) {
+            for (int var3x = var5; var3x >= var4; var3x--) {
+               var7.set(var1x, var3x, var2x);
+               if (!var1.getBlockState(var7).isAir()) {
+                  return var3x;
+               }
+            }
+            return Integer.MIN_VALUE;
+         }
+      };
+      SlumpWaterField.SlumpColumnProbe var16 = new SlumpWaterField.SlumpColumnProbe() {
+         @Override
+         public boolean hasData(int var1x, int var2x) {
+            int var3x = var1x - var3.getMinBlockX();
+            int var4x = var2x - var3.getMinBlockZ();
+            return var3x >= 0 && var3x <= 15 && var4x >= 0 && var4x <= 15;
+         }
+
+         @Override
+         public int top(int var1x, int var2x) {
+            if (!this.hasData(var1x, var2x)) {
+               return Integer.MIN_VALUE;
+            }
+            return var15.top(var1x, var2x);
+         }
+      };
+      SlumpWaterField.SlumpBiomeProbe var17 = new SlumpWaterField.SlumpBiomeProbe() {
+         @Override
+         public boolean isShocked(int var1x, int var2x, int var3x) {
+            return var9.isShockedSlump(var1x, var2x, var3x);
+         }
+      };
+      SlumpWaterField.SlumpStats var18 = new SlumpWaterField.SlumpStats();
+      SlumpWaterField.apply(var3, var4, var5, var6.slumpBed(),
+         var17, var16,
+         var8,
+         this::blockStateOf,
+         SlumpWaterField.FLOOD_LEVEL,
+         var18);
+      this.logSlumpWater(var3, var18);
+
       if (var10 > 0) {
          GuogaologyMod.LOGGER.debug("[outer] LHO island/void columns rewritten at {}", var10);
       }
 
       return var1;
+   }
+
+   /** 第三遍注水遍的统计：每个区块一行 debug 日志（只在真的注了水的区块打印）。 */
+   private void logSlumpWater(ChunkPos var1, SlumpWaterField.SlumpStats var2) {
+      if (var2.floodedColumns <= 0) {
+         return; // 没注水的区块：不打印（不刷屏）
+      }
+      GuogaologyMod.LOGGER.debug(
+             "[SLUMP_WATER] chunk=({}, {}) candidates={} flooded={} water={} sand={} gravel={} refused={}",
+             var1.getMinBlockX() >> 4, var1.getMinBlockZ() >> 4,
+             var2.candidates, var2.floodedColumns, var2.waterCells,
+             var2.sandBedCells, var2.gravelBedCells, var2.boundaryRefused);
    }
 
    private BlockState blockStateOf(int var1) {
@@ -205,6 +269,7 @@ public class LhoChunkGenerator extends ChunkGenerator {
          case 6 -> Blocks.GRAVEL.defaultBlockState();
          case 7 -> ModBlocks.STELLAR_STONE_BLOCK.defaultBlockState();
          case 8 -> ModBlocks.HELL_ORDINAL_STONE.defaultBlockState();
+         case 9 -> Blocks.WATER.defaultBlockState();
          default -> Blocks.AIR.defaultBlockState();
       };
    }
@@ -224,7 +289,8 @@ public class LhoChunkGenerator extends ChunkGenerator {
                LhoIslandField.createBandNoise(var1),
                LhoIslandField.createBandJitterNoise(var1),
                LhoIslandField.createSurfaceNoise(var1),
-               LhoIslandField.createGlassIslandNoise(var1)
+               LhoIslandField.createGlassIslandNoise(var1),
+               SlumpWaterField.createBedNoise(var1)
             );
             this.noiseCache = var3;
          }
@@ -233,7 +299,7 @@ public class LhoChunkGenerator extends ChunkGenerator {
       }
    }
 
-   private record NoiseCache(long seed, NormalNoise island, NormalNoise band, NormalNoise jitter, NormalNoise surface, NormalNoise glassIsland) {
+   private record NoiseCache(long seed, NormalNoise island, NormalNoise band, NormalNoise jitter, NormalNoise surface, NormalNoise glassIsland, NormalNoise slumpBed) {
    }
 
    private static final class WorldBiomeGrid {
@@ -241,6 +307,7 @@ public class LhoChunkGenerator extends ChunkGenerator {
       private static final byte VOID = 1;
       private static final byte EDGE = 2;
       private static final byte PLAIN = 4;
+      private static final byte SHOCKED = 8;
       private interface Resolver {Holder<Biome> getNoiseBiome(int x,int y,int z);}
       private final Resolver resolver;
       private final int quartY;
@@ -280,6 +347,9 @@ public class LhoChunkGenerator extends ChunkGenerator {
          if (var3.is(LhoChunkGenerator.LHO_VOID_BIOME)) {
             return 1;
          } else {
+            if (var3.is(LhoChunkGenerator.SHOCKED_SLUMP_BIOME)) {
+               return SHOCKED;
+            }
             return (byte)(var3.is(LhoChunkGenerator.LHO_EDGE_BIOME) ? 2 : 4);
          }
       }
@@ -294,6 +364,10 @@ public class LhoChunkGenerator extends ChunkGenerator {
 
       boolean isUnderworld(int var1, int var2, int var3) {
          return this.resolver.getNoiseBiome(var1 >> 2, var2 >> 2, var3 >> 2).is(LhoChunkGenerator.UNDERWORLD_BIOME);
+      }
+
+      boolean isShockedSlump(int var1, int var2, int var3) {
+         return this.resolver.getNoiseBiome(var1 >> 2, var2 >> 2, var3 >> 2).is(LhoChunkGenerator.SHOCKED_SLUMP_BIOME);
       }
    }
 }
