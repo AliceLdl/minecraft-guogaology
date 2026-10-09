@@ -238,6 +238,31 @@ public class LhoChunkGenerator extends ChunkGenerator {
          var17);
       this.logSlumpWater(var3, var17);
 
+      // 第四遍（本轮新增，用户要求）：大数表界地表群系的「无穷降链」——
+      // 3×3 的孔从地表一直通到虚空（含底面基岩），孔壁一圈序石螺旋楼梯。
+      // 候选孔位由 SurfaceShaftField 的世界网格哈希决定（确定性、无跨区块状态）；
+      // 孔位的地表群系是 lho_void / lho_edge 则放弃（用户排除的两个群系）。
+      SurfaceShaftField.ShaftProbe var18 = new SurfaceShaftField.ShaftProbe() {
+         @Override
+         public boolean hasData(int var1x, int var2x) {
+            return var15.hasData(var1x, var2x);
+         }
+
+         @Override
+         public int top(int var1x, int var2x) {
+            return var15.top(var1x, var2x);
+         }
+
+         @Override
+         public boolean isVoidOrEdge(int var1x, int var2x, int var3x) {
+            return var9.isVoidOrEdge(var1x, var2x, var3x);
+         }
+      };
+      int var19 = SurfaceShaftField.apply(var2.seed(), var3, var4, var5, var18, var8, this::blockStateOf);
+      if (var19 > 0) {
+         GuogaologyMod.LOGGER.debug("[SURFACE_SHAFT] chunk=({}, {}) shafts={}", var3.getMinBlockX() >> 4, var3.getMinBlockZ() >> 4, var19);
+      }
+
       if (var10 > 0) {
          GuogaologyMod.LOGGER.debug("[outer] LHO island/void columns rewritten at {}", var10);
       }
@@ -365,6 +390,11 @@ public class LhoChunkGenerator extends ChunkGenerator {
 
       boolean isShockedSlump(int var1, int var2, int var3) {
          return this.resolver.getNoiseBiome(var1 >> 2, var2 >> 2, var3 >> 2).is(LhoChunkGenerator.SHOCKED_SLUMP_BIOME);
+      }
+
+      boolean isVoidOrEdge(int var1, int var2, int var3) {
+         Holder var4 = this.resolver.getNoiseBiome(var1 >> 2, var2 >> 2, var3 >> 2);
+         return var4.is(LhoChunkGenerator.LHO_VOID_BIOME) || var4.is(LhoChunkGenerator.LHO_EDGE_BIOME);
       }
    }
 }
