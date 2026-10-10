@@ -6,16 +6,16 @@
 
 | 版本 | 内容 | 状态 |
 |---|---|---|
-| **0.5.4** | 震惊瘫坐之地「局部海平面/盆地注水」（SlumpWaterField，L=38） | ✅ 已提交、已推送分支 `codex/0.5.4-slump-water`、已部署 |
-| **0.5.5** | 大数表界「无穷降链」3×3 竖井 + 序石螺旋楼梯；葛立恒藤加入 `minecraft:climbable` 标签 | ✅ 已提交、已推送 `codex/0.5.5-surface-shaft-and-vine`、已部署 |
-| **0.5.6** | 修 26.3 数据格式漂移（loot `block_state_property`→`match_block`；advancement `recipe`→`recipes`）——**首次让 26.3 能进世界** | ✅ 已提交、已推送 `codex/0.5.6-26.3-data-fixups`、已部署 |
-| **0.5.7** | ①竖井外圈 16 格石壳（防联通洞穴）②楼梯改用「康威链岩」+ 四方向箭头 | ⚠️ **未提交**：①已完成并构建通过；②**做到一半**（见下） |
+| **0.5.3.1** | 震惊瘫坐之地「局部海平面/盆地注水」（SlumpWaterField，L=38） | ✅ 已提交、已推送分支 `codex/0.5.4-slump-water`、已部署 |
+| **0.5.3.2** | 大数表界「无穷降链」3×3 竖井 + 序石螺旋楼梯；葛立恒藤加入 `minecraft:climbable` 标签 | ✅ 已提交、已推送 `codex/0.5.5-surface-shaft-and-vine`、已部署 |
+| **0.5.3.3** | 修 26.3 数据格式漂移（loot `block_state_property`→`match_block`；advancement `recipe`→`recipes`）——**首次让 26.3 能进世界** | ✅ 已提交、已推送 `codex/0.5.6-26.3-data-fixups`、已部署 |
+| **0.5.3.4** | ①竖井外圈 16 格石壳（防联通洞穴）②楼梯改用「康威链岩」+ 四方向箭头 | ⚠️ **未提交**：①已完成并构建通过；②**做到一半**（见下） |
 
 - 仓库：`C:\Users\HUAWEI\Documents\deepseek-harness\default-workspace\guogaology`（fork：github.com/AliceLdl/minecraft-guogaology，deploy key 推送已通）
 - 用户实际游玩的实例：`…\PCL+正式版+2.13.1.1\.minecraft\versions\26.3-Fabric 0.19.5\mods\`
   （另一个实例 `fabric-loader-0.19.5-26.3\mods` 也同步；`Downloads\` 放测试副本）
 
-## 二、0.5.7 未完成的部分（新对话从这里接着做）
+## 二、0.5.3.4 未完成的部分（新对话从这里接着做）
 
 需求：**螺旋楼梯的台阶统一用「康威链岩」`guogaology:conway_link`，且该方块支持四个水平朝向，箭头始终指向下一级（低一格）台阶。**
 
@@ -51,7 +51,7 @@
 $py="C:\Users\HUAWEI\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
 Set-Location "C:\Users\HUAWEI\Documents\deepseek-harness\default-workspace\guogaology"
 & $py -X utf8 tools\prepare_port_sources.py 26.3          # 生成端口源码
-& $py -X utf8 tools\prepare_port_resources.py 26.3 0.5.7  # 生成端口资源（含 26.3 数据修复）
+& $py -X utf8 tools\prepare_port_resources.py 26.3 0.5.3.4  # 生成端口资源（含 26.3 数据修复）
 & $py "C:\Users\HUAWEI\Documents\deepseek-harness\default-workspace\.toolchain\guogaology-offloom-263.py"  # off-loom 构建（javac+打包）
 & $py -X utf8 tools\audit_resources.py --check ; & $py -X utf8 tools\audit_localization.py --check ; & $py -X utf8 tools\audit_outer_content.py
 ```
