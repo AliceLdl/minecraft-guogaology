@@ -219,6 +219,58 @@ def convert_263_misc(out):
             'default':{'type':'minecraft:weighted_list','distribution':[{'data':1,'weight':chance},{'data':0,'weight':100-chance}]}})
 
 
+def convert_263_data_fixups(out):
+    """26.3 数据格式漂移的**幂等**修复（必须跑在 prepare_outer 之后 —— 外域导入会再写一遍
+    advancement / loot_table，而那些文件不会经过 convert_263_misc）。
+
+    两处实测漂移（以真实 26.3 jar 的原版数据为样例）：
+      1) 掉落条件类型 ``minecraft:block_state_property`` 已删除 ⇒ 现名 ``minecraft:match_block``，
+         字段 ``block`` → ``blocks``、``properties`` → ``state``
+         （样例 data/minecraft/loot_table/blocks/acacia_slab.json）。
+      2) 配方解锁的判据 ``minecraft:recipe_unlocked`` 的 ``recipe`` → ``recipes``
+         （样例 data/minecraft/advancement/recipes/brewing/blaze_powder.json）。
+    未命中这两处的文件一律原样写回 ⇒ 可重复执行。
+    """
+    renamed = 0
+
+    def fix_loot(value):
+        nonlocal renamed
+        if isinstance(value, list):
+            return [fix_loot(v) for v in value]
+        if not isinstance(value, dict):
+            return value
+        result = {k: fix_loot(v) for k, v in value.items()}
+        if result.get('type') == 'minecraft:block_state_property':
+            result['type'] = 'minecraft:match_block'
+            if 'block' in result:
+                result['blocks'] = result.pop('block')
+            if 'properties' in result:
+                result['state'] = result.pop('properties')
+            renamed += 1
+        return result
+
+    for path in (out / 'data/guogaology/loot_table').rglob('*.json'):
+        data = read(path)
+        fixed = fix_loot(data)
+        if fixed != data:
+            write(path, fixed)
+
+    for path in (out / 'data/guogaology/advancement').rglob('*.json'):
+        data = read(path)
+        changed = False
+        for criterion in data.get('criteria', {}).values():
+            if criterion.get('trigger') != 'minecraft:recipe_unlocked':
+                continue
+            conditions = criterion.get('conditions', {})
+            if 'recipe' in conditions:
+                conditions['recipes'] = [conditions.pop('recipe')]
+                changed = True
+        if changed:
+            write(path, data)
+
+    return renamed
+
+
 def prepare(target, release):
     config = TARGETS[target]
     out = (ROOT / "ports" / target / "build/generated/resources").resolve()
@@ -285,6 +337,11 @@ def prepare(target, release):
     portable = convert_items(out)
     from prepare_outer_resources import prepare as prepare_outer
     prepare_outer(target, out)
+    if target == '26.3':
+        # ⚠️ 必须在 prepare_outer 之后：外域导入进来的 advancement / loot_table
+        #    不经过上面的 convert_263_misc ⇒ 26.3 的两处数据漂移要在最后统一修一遍。
+        fixed = convert_263_data_fixups(out)
+        print(f"Prepared 26.3 data fixups: {fixed} loot conditions renamed")
     print(f"Prepared {target} resources: {portable} portable decoration variants")
     return out
 
