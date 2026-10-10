@@ -21,6 +21,8 @@ def audit(root, prune=False):
     retained = set()
     pending = []
     missing = set()
+    bad_uv = set()
+    current = [None]
 
     def add(path):
         if not path.is_file():
@@ -51,6 +53,15 @@ def audit(root, prune=False):
                 elif key == 'textures' and isinstance(child, dict):
                     for entry in child.values():
                         texture(entry)
+                elif key == 'uv' and isinstance(child, list):
+                    # Model UVs live in a 0..16 unit space whatever the texture
+                    # resolution is; larger values sample outside the stitched
+                    # sprite and render the atlas missing texture in game.
+                    # core_meshes/*.json is this mod's own mesh format, not a
+                    # vanilla model, so it is excluded from this rule.
+                    if '/models/' in current[0].as_posix() and any(
+                            not isinstance(v, (int, float)) or v < 0 or v > 16 for v in child):
+                        bad_uv.add(current[0].relative_to(root).as_posix())
                 else:
                     walk(child)
 
@@ -73,7 +84,8 @@ def audit(root, prune=False):
         add(imported/f'textures/entity/boat/{wood}_boat.png')
         add(imported/f'textures/gui/signs/{wood}.png')
     while pending:
-        walk(json.loads(pending.pop().read_text(encoding='utf8')))
+        current[0] = pending.pop()
+        walk(json.loads(current[0].read_text(encoding='utf8')))
     candidates = {p for assetroot in (assets,) for directory in ('blockstates', 'models', 'textures', 'equipment', 'core_meshes')
                   for p in (assetroot / directory).rglob('*') if p.is_file()}
     unused = sorted(candidates - retained)
@@ -82,13 +94,17 @@ def audit(root, prune=False):
         'unused_assets': len(unused),
         'unused_bytes': sum(p.stat().st_size for p in unused),
         'missing_references': sorted(missing),
+        'out_of_range_uv': sorted(bad_uv),
         'unused_paths': [p.relative_to(root).as_posix() for p in unused],
         'notes': ['Block/item entrypoints retained except six unregistered *_sad aliases.',
                   'All live blockstate variants, item overrides and 28 core meshes traversed.',
+                  'Model UV values must stay inside the 0..16 unit space.',
                   'Both legacy and modern armor textures retained; imported block/item IDs belong to the host.'],
     }
     if missing:
         raise ValueError('Missing referenced resources: ' + ', '.join(sorted(missing)))
+    if bad_uv:
+        raise ValueError('Model UV outside the 0..16 unit space: ' + ', '.join(sorted(bad_uv)))
     if prune:
         # Individual audited files only: no recursive removal or external target.
         for path in unused:
