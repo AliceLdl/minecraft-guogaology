@@ -260,7 +260,8 @@ public class LhoChunkGenerator extends ChunkGenerator {
             return var9.isVoidOrEdge(var1x, var2x, var3x);
          }
       };
-      int var20 = SurfaceShaftField.apply(worldSeed, var3, var4, var5, var19, var8, this::blockStateOf);
+      int var20 = SurfaceShaftField.apply(worldSeed, var3, var4, var5, var19, var8, this::blockStateOf,
+            SurfaceShaftField::conwayStep);
       if (var20 > 0) {
          GuogaologyMod.LOGGER.debug("[SURFACE_SHAFT] chunk=({}, {}) shafts={}", var3.getMinBlockX() >> 4, var3.getMinBlockZ() >> 4, var20);
       }

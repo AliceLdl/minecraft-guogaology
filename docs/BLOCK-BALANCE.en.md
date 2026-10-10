@@ -163,3 +163,5 @@ Four ore tiers now use ordinary hardness 3/3.5/4/4.5 and require an iron pickaxe
 | Outer Return Frame | `outer_return_frame` | 0.8 | 3 | Hand | None | 0 | Low pedestal and corner posts | Block itself |
 | Inner Return Frame | `inner_return_frame` | 0.8 | 3 | Hand | None | 0 | Low pedestal and corner posts | Block itself |
 | Dread Forest Return Frame | `guogao_return_frame` | 0.8 | 3 | Hand | None | 0 | Low pedestal and corner posts | Block itself |
+
+> Conway Chain Stone facings: it faces the player when placed by hand (default east). The Outer "infinite descending chain" shaft sets every spiral step toward the **next lower step**, so the arrow always points the way down.

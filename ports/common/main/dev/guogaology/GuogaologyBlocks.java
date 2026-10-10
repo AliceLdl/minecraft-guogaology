@@ -1,5 +1,6 @@
 package dev.guogaology;
 
+import dev.guogaology.block.ConwayLinkBlock;
 import dev.guogaology.block.FruitJellyBlock;
 import dev.guogaology.block.GuogaologyPortalBlock;
 import dev.guogaology.block.AbsenceBlock;
@@ -55,7 +56,7 @@ public final class GuogaologyBlocks {
     public static final Block PROJECTION_GLASS = landscape("projection_glass",true);
     public static final Block BEAF_MARBLE = landscape("beaf_marble",false);
     public static final Block BIRD_SHALE = landscape("bird_shale",false);
-    public static final Block CONWAY_LINK = landscape("conway_link",false);
+    public static final Block CONWAY_LINK = conwayLink("conway_link");
     public static final Block VEBLEN_PETAL = landscape("veblen_petal",true);
     public static final Block LIMIT_STONE = landscape("limit_stone",false);
     public static final Block RANK_AMBER = landscape("rank_amber",false);
@@ -213,6 +214,11 @@ public final class GuogaologyBlocks {
     private static Block landscape(String name,boolean clear){
         var settings=dev.guogaology.survival.BlockBalance.apply(name,BlockBehaviour.Properties.ofFullCopy(clear?Blocks.GLASS:Blocks.CALCITE));
         return clear?translucent(name,new TransparentBlock(settings.noOcclusion())):block(name,new Block(settings));
+    }
+    // 康威链岩：四方向箭头方块（属性与 landscape 分支完全一致，只换成带 FACING 的类）
+    private static Block conwayLink(String name){
+        var settings=dev.guogaology.survival.BlockBalance.apply(name,BlockBehaviour.Properties.ofFullCopy(Blocks.CALCITE));
+        return block(name,new ConwayLinkBlock(settings));
     }
 
     private static Block jelly(String name) {

@@ -52,6 +52,21 @@ def state_selector(entries, fallback):
             "block_state_property": prop, "cases": cases, "fallback": fallback}
 
 
+CONWAY_FACINGS = (("east", 0), ("south", 90), ("west", 180), ("north", 270))
+
+
+def apply_modern_conway_blockstate(out):
+    """康威链岩在现代目标上是四朝向箭头方块（箭头指向下一级台阶）。
+
+    1.21.1 基座的同名方块**没有** facing 属性，而它直接吃 src/main/resources ⇒ 源
+    blockstate 必须保持单变体 ``""``（给旧目标写 ``facing=`` 会变成未知属性）。所以四朝向
+    变体只在这里覆写，且只给现代目标（本函数的所有 target 都是现代目标）。
+    """
+    write(out / "assets/guogaology/blockstates/conway_link.json", {
+        "variants": {f"facing={name}": {"model": "guogaology:block/conway_link", "y": rotation}
+                     for name, rotation in CONWAY_FACINGS}})
+
+
 def convert_items(out):
     assets = out / "assets/guogaology"
     context_cores = set(core_names(assets))
@@ -342,6 +357,8 @@ def prepare(target, release):
         #    不经过上面的 convert_263_misc ⇒ 26.3 的两处数据漂移要在最后统一修一遍。
         fixed = convert_263_data_fixups(out)
         print(f"Prepared 26.3 data fixups: {fixed} loot conditions renamed")
+    # 现代目标的康威链岩四朝向变体（见函数注释；1.21.1 不吃这份生成物）。
+    apply_modern_conway_blockstate(out)
     print(f"Prepared {target} resources: {portable} portable decoration variants")
     return out
 
