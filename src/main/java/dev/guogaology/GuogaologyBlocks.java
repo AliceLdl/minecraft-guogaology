@@ -93,6 +93,9 @@ public final class GuogaologyBlocks {
     public static final Block PLAIN_BERRY_GUOGAO = jelly("plain_berry_guogao");
     public static final Block PLAIN_LIME_GUOGAO = jelly("plain_lime_guogao");
     public static final Block PLAIN_AZURE_GUOGAO = jelly("plain_azure_guogao");
+    // 软糖罐（0.5.11）：以原版陶罐为骨架的玻璃罐 + 金属瓶盖，罐内一团彩色软糖；
+    // 挖掉后由掉落表给 1~3 个随机软糖；紫菜桌上代替「素面果糕」生成。
+    public static final Block GUMMY_JAR = translucent("gummy_jar", new GummyJarBlock(dev.guogaology.survival.BlockBalance.apply("gummy_jar",AbstractBlock.Settings.copy(Blocks.GLASS).nonOpaque())));
 
     public static final Block OUTER_RETURN_FRAME = block("outer_return_frame", new dev.guogaology.block.ReturnFrameBlock(dev.guogaology.survival.BlockBalance.apply("outer_return_frame",AbstractBlock.Settings.create().nonOpaque()),0));
     public static final Block INNER_RETURN_FRAME = block("inner_return_frame", new dev.guogaology.block.ReturnFrameBlock(dev.guogaology.survival.BlockBalance.apply("inner_return_frame",AbstractBlock.Settings.create().nonOpaque()),1));

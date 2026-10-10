@@ -188,12 +188,12 @@ public record LaverTableFeature(WeightedList<TemplateEntry> templates, Optional<
       return var1;
    }
 
-   /** Independent appearance per gummy: mixed tables are allowed. */
+   /** Independent appearance per gummy: mixed tables are allowed.
+    *  0.5.11：紫菜桌上不再放「素面果糕」(plain_*)，改放**软糖罐**；拿不到就退回花面果糕。 */
    public static Block tableGummy(RandomSource random, Block embossed) {
       if(random.nextInt(5)==0)return embossed;
-      var id=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(embossed);
-      var plain=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.guogaology.outer.GuogaologyMod.id("plain_"+id.getPath()));
-      return plain==Blocks.AIR?embossed:plain;
+      var jar=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.guogaology.outer.GuogaologyMod.id("gummy_jar"));
+      return jar==Blocks.AIR?embossed:jar;
    }
 
    public int placeGummies(WorldGenLevel var1, RandomSource var2, StructureTemplate var3, BlockPos var4, StructurePlaceSettings var5, Block var6) {

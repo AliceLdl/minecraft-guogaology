@@ -1,0 +1,45 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "guogaology:block/gummy_jar",
+    "jar": "guogaology:block/gummy_jar"
+  },
+  "elements": [
+    {
+      "from": [1, 0, 1],
+      "to": [15, 12, 15],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#jar"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#jar"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#jar"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#jar"},
+        "up": {"uv": [16, 8, 24, 16], "texture": "#jar"},
+        "down": {"uv": [24, 8, 32, 16], "texture": "#jar"}
+      }
+    },
+    {
+      "from": [2, 12, 2],
+      "to": [14, 14, 14],
+      "faces": {
+        "north": {"uv": [16, 0, 24, 4], "texture": "#jar"},
+        "south": {"uv": [16, 0, 24, 4], "texture": "#jar"},
+        "east": {"uv": [16, 0, 24, 4], "texture": "#jar"},
+        "west": {"uv": [16, 0, 24, 4], "texture": "#jar"},
+        "up": {"uv": [16, 0, 24, 4], "texture": "#jar"},
+        "down": {"uv": [24, 8, 32, 16], "texture": "#jar"}
+      }
+    },
+    {
+      "from": [4, 14, 4],
+      "to": [12, 16, 12],
+      "faces": {
+        "north": {"uv": [16, 4, 24, 8], "texture": "#jar"},
+        "south": {"uv": [16, 4, 24, 8], "texture": "#jar"},
+        "east": {"uv": [16, 4, 24, 8], "texture": "#jar"},
+        "west": {"uv": [16, 4, 24, 8], "texture": "#jar"},
+        "up": {"uv": [24, 0, 32, 8], "texture": "#jar"},
+        "down": {"uv": [16, 0, 24, 4], "texture": "#jar"}
+      }
+    }
+  ]
+}

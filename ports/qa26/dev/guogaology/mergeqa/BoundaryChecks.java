@@ -72,8 +72,9 @@ public final class BoundaryChecks {
             check(inner.getBlockState(pos).isAir(),"decoration bridged the coast at "+pos+": "+inner.getBlockState(pos));air++;
         }
         int plain=0;var random=RandomSource.create(36080);
-        for(int i=0;i<10000;i++)if(LaverTableFeature.tableGummy(random,GuogaologyBlocks.AMBER_GUOGAO)==GuogaologyBlocks.PLAIN_AMBER_GUOGAO)plain++;
-        check(plain>7850&&plain<8150,"plain gummy probability: "+plain);
+        // 0.5.11 起，紫菜桌上「素面果糕」那一档改成软糖罐（比例仍是 4/5）
+        for(int i=0;i<10000;i++)if(LaverTableFeature.tableGummy(random,GuogaologyBlocks.AMBER_GUOGAO)==GuogaologyBlocks.GUMMY_JAR)plain++;
+        check(plain>7850&&plain<8150,"gummy jar probability: "+plain);
         var world=server.overworld();
         var feature=(LaverTableFeature)world.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE).getValue(GuogaologyMod.id("laver_table")).config();
         var template=world.getStructureManager().get(GuogaologyMod.id("laver_table_7")).orElseThrow();
@@ -85,11 +86,11 @@ public final class BoundaryChecks {
             for(int i=0;i<400;i++){
                 for(var pos:top)world.setBlock(pos.above(),Blocks.AIR.defaultBlockState(),2);
                 int count=feature.placeGummies(world,random,template,anchor,settings,GuogaologyBlocks.AMBER_GUOGAO),a=0,b=0;
-                for(var pos:top){var state=world.getBlockState(pos.above());if(state.is(GuogaologyBlocks.PLAIN_AMBER_GUOGAO))a++;else if(state.is(GuogaologyBlocks.AMBER_GUOGAO))b++;}
+                for(var pos:top){var state=world.getBlockState(pos.above());if(state.is(GuogaologyBlocks.GUMMY_JAR))a++;else if(state.is(GuogaologyBlocks.AMBER_GUOGAO))b++;}
                 check(a+b==count,"table writes exactly its selected gummies");emittedPlain+=a;emittedFace+=b;if(a>0&&b>0)mixed++;
             }
         }
-        check(emittedPlain>100&&emittedFace>15&&mixed>0,"both variants and mixed tables actually generate");
+        check(emittedPlain>100&&emittedFace>15&&mixed>0,"gummy jars and embossed gummies on mixed tables actually generate");
         for(int i=4;i<8;i++){
             var block=GuogaologyBlocks.ALL_JELLIES[i];
             check(GuogaologyBlocks.TRANSLUCENT.contains(block),"plain gummy transparency registered");
@@ -98,7 +99,7 @@ public final class BoundaryChecks {
             var drops=Block.getDrops(block.defaultBlockState(),server.overworld(),new BlockPos(0,220,0),null,player,net.minecraft.world.item.ItemStack.EMPTY);
             check(drops.size()==1&&drops.getFirst().is(block.asItem()),"plain gummy harvest preserves style");
         }
-        String result="old_edge="+oldEdge+"\nnew_edge="+edge+"\nrestored_inland="+restored+"\nvoid_unchanged="+voidCount+"\ninner_gap_columns="+gaps+"\nactual_air_column="+air+"\nplain_gummies_per_10000="+plain+"\nactual_gummies="+emittedPlain+" plain / "+emittedFace+" embossed; mixed tables="+mixed+"\nouter_site="+outerSite+"\ninner_site="+innerSite+"\nseconds="+(System.nanoTime()-start)/1e9+"\n";
+        String result="old_edge="+oldEdge+"\nnew_edge="+edge+"\nrestored_inland="+restored+"\nvoid_unchanged="+voidCount+"\ninner_gap_columns="+gaps+"\nactual_air_column="+air+"\ngummy_jars_per_10000="+plain+"\nactual_gummies="+emittedPlain+" plain / "+emittedFace+" embossed; mixed tables="+mixed+"\nouter_site="+outerSite+"\ninner_site="+innerSite+"\nseconds="+(System.nanoTime()-start)/1e9+"\n";
         Files.writeString(Path.of("boundary-checks.txt"),result);System.out.println("BOUNDARY_036_OK "+result.replace('\n',' '));
     }
     public static void display(ServerPlayer p,int scene){

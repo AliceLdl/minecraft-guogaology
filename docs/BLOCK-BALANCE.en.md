@@ -17,6 +17,7 @@ Four ore tiers now use ordinary hardness 3/3.5/4/4.5 and require an iron pickaxe
 | Absence Glass | `absence_glass` | 0.35 | 0.5 | Hand | None | 2 | Full block | Block itself |
 | Amber Apple Guogao | `amber_guogao` | 0.5 | 1 | Hand | None | 3 | Inset Guogao shape | Block itself |
 | Plain Amber Apple Guogao | `plain_amber_guogao` | 0.5 | 1 | Hand | None | 3 | Inset Guogao shape | Block itself |
+| Gummy Jar | `gummy_jar` | 0.3 | 0.3 | Hand | None | 3 | Jar shape | 1-3 random gummies |
 | Amber Inlay Bricks | `amber_inlay` | 1.5 | 5 | Pickaxe | None | 10 | Full block | Block itself |
 | Astra Condensed Cloud | `astra_cloud` | 0.4 | 0.5 | Shears | None | 2 | Full block | Block itself |
 | Astra Cloud Billow | `astra_cloud_shade` | 0.4 | 0.5 | Shears | None | 2 | Full block | Block itself |
