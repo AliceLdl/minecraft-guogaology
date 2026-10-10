@@ -37,8 +37,8 @@ import net.minecraft.world.level.block.state.properties.Property;
  * 顶面 anchor 的地表 Y 以下：3×3 全挖空（含基岩，⇒ 通向虚空）；井外一圈
  * <b>5×5 去掉 3×3 = 正好 16 格</b>全部填成本维度的石头（{@link LhoIslandField#M_ORDINAL_STONE}，
  * 与地表下的岩层同材质），<b>从地表下一格（{@code top-1}）一直封到井底</b> —— 防止井与周边
- * 洞穴/空腔联通（用户要求）；起点取 {@code top-1} 是为了让石壳顶面与螺旋楼梯最高一级台阶
- * <b>平齐</b>（用户 0.5.9 要求）。井内壁每层一步压回序石螺旋楼梯。
+ * 洞穴/空腔联通（用户要求）。井内壁每层一步压回序石螺旋楼梯，<b>最高一级在 {@code top} 层</b>：
+ * 于是 <b>楼梯顶面与地表平齐、且比石壳（顶面在 {@code top}）高出 1 格</b>（用户 0.5.10 要求）。
  * 顶面 Y 以上不动（孔口即裸露地表）。
  *
  * <h2>可观测性</h2>
@@ -48,8 +48,14 @@ public final class SurfaceShaftField {
 	private SurfaceShaftField() {
 	}
 
-	/** 世界网格尺寸：每 CELL×CELL 至多一根链（160 ⇒ 约 3.9/km²，比地表链密度低一档）。 */
-	public static final int CELL = 160;
+	/**
+	 * 世界网格尺寸：每 CELL×CELL 至多一根链。
+	 *
+	 * <p>密度与 CELL² 成反比：{@code 160} → 原密度；用户 0.5.10 要求**密度翻倍**
+	 * ⇒ 取 {@code 160/√2 ≈ 113}（(160/113)² = 2.004 ⇒ 正好 2 倍）。
+	 * {@link #MARGIN} 不变 ⇒ 跨 cell 最小间距仍是 48 格，井与井不会挤在一起。
+	 */
+	public static final int CELL = 113;
 	/** 本 cell 内可能的落点离 cell 起点的最小/最大偏移（离 cell 边 ≥24 格 ⇒ 跨 cell 间距 ≥48 格）。 */
 	public static final int MARGIN = 24;
 	/** 顺时针 8 边缘格（3×3 的外围一圈，偏移相对孔右下角 (sx, sz)）。 */
@@ -57,7 +63,8 @@ public final class SurfaceShaftField {
 
 	/**
 	 * 表面探针：{@code hasData/top} 限定在<b>当前区块</b>内（越界 = 不写），
-	 * {@code isVoidOrEdge} 直接读世界 quart 群系解析。三方法 ⇒ 不是函数式接口。
+	 * {@code isVoidOrEdge} 直接读世界 quart 群系解析，{@code isFluid} 读当前方块是不是流体
+	 * （井口密封用：区域水位 / 盆地注水都在竖井之前写水）。四方法 ⇒ 不是函数式接口。
 	 */
 	public interface ShaftProbe {
 		boolean hasData(int x, int z);
@@ -65,6 +72,9 @@ public final class SurfaceShaftField {
 		int top(int x, int z);
 
 		boolean isVoidOrEdge(int x, int y, int z);
+
+		/** 该坐标**当前**是不是流体（水/岩浆）——用于把井口那层的流体换回石壳材质，防止漏水。 */
+		boolean isFluid(int x, int y, int z);
 	}
 
 	/**
@@ -183,9 +193,9 @@ public final class SurfaceShaftField {
 				}
 				// ---- 石壳：3×3 洞周围一圈（5×5 去掉 3×3 = 正好 16 格）全填石，
 				//      从地表**下一格**一直封到井底，防止井与周边洞穴/空腔联通（用户要求）。
-				//      ⚠️ 起点是 top-1 而不是 top：这样石壳顶面与螺旋楼梯**最高一级台阶的顶面平齐**，
-				//         井口不再出现「石壳比最高台阶高出 1 格」的观感（用户 0.5.9 要求，B 方案：
-				//         降石壳。top 那一层留着原地表，石壳顶面因此比周围草地低 1 格，这是预期效果）。
+				//      ⚠️ 起点是 top-1 而不是 top：石壳顶面因此比地表低 1 格，于是依次
+				//         地表（top+1 顶面）> 最高一级台阶（= 地表平齐）> 石壳（低 1 格）
+				//         —— 用户 0.5.9/0.5.10 两次要求合起来就是这个形状。
 				//      起点的 top-1 >= minY 有保证：上面已排除 top <= minY。----
 				for (int y = top - 1; y >= minY; y--) {
 					for (int dx = -1; dx <= 3; dx++) {
@@ -197,6 +207,21 @@ public final class SurfaceShaftField {
 						}
 					}
 				}
+				// ---- 井口密封：地表那一层（top）的 16 格石壳位，如果**当前是流体**
+				//      （区域水位 RegionalWaterMixin / 盆地注水等都在竖井之前写水），
+				//      一律换回石壳材质。否则井口那格就是水，水会顺着井壁流进结构里
+				//      （用户 0.5.10 要求：石壳不能被水替换）。
+				//      只改流体格 ⇒ 干燥处仍是原地表，石壳顶面照旧比最高台阶低 1 格。----
+				for (int dx = -1; dx <= 3; dx++) {
+					for (int dz = -1; dz <= 3; dz++) {
+						if (dx >= 0 && dx <= 2 && dz >= 0 && dz <= 2) {
+							continue; // 井本体不密封（那里是井口开口）
+						}
+						if (probe.isFluid(sx + dx, top, sz + dz)) {
+							sink.set(sx + dx, top, sz + dz, palette.of(LhoIslandField.M_ORDINAL_STONE));
+						}
+					}
+				}
 				// ---- 挖：3×3 从地表往下直到本区块写入下界（基岩也挖 ⇒ 通向虚空）----
 				for (int y = top; y >= minY; y--) {
 					for (int dx = 0; dx < 3; dx++) {
@@ -205,10 +230,17 @@ public final class SurfaceShaftField {
 						}
 					}
 				}
-				// ---- 楼梯：顶面下一步开始，顺时针 8 边缘格每层一步；
-				//      每级台阶的朝向 = 指向下一级（低一格）台阶的水平方向 ⇒ 箭头指路。----
-				for (int y = top - 1; y > minY; y--) {
-					int slot = (top - 1 - y) & 7;
+				// ---- 楼梯：从**地表那一层**（top）开始，顺时针 8 边缘格每层一步；
+				//      每级台阶的朝向 = 指向下一级（低一格）台阶的水平方向 ⇒ 箭头指路。
+				//      ① 起点取 top（不是 top-1）：最高一级台阶的顶面 = top+1 = 地表那层的顶面
+				//         ⇒ **楼梯与地表平齐**，而石壳从 top-1 起 ⇒ **最高一级台阶高出石壳 1 格**
+				//         （用户 0.5.10 要求）。
+				//      ② 序号用 (top - y - 1)：{@link #RING} 的偶数号是边中点、奇数号是角落，
+				//         减 1 之后最高一级（y=top）落在 RING[7] = 西南**角落**，而不是边中点
+				//         （用户要求「从角落开始，不是从边上」）。箭头方向不变（仍指北）。
+				//         往下每降一层 slot+1 ⇒ 角落/边中点交替，一圈 8 级正好绕回。----
+				for (int y = top; y > minY; y--) {
+					int slot = (top - y - 1) & 7;
 					int ox = RING[slot][0];
 					int oz = RING[slot][1];
 					sink.set(sx + ox, y, sz + oz, steps.step(stepFacing(slot)));
