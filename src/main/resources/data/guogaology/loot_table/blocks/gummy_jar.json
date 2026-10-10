@@ -10,19 +10,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "guogaology:amber_guogao"
-        },
-        {
-          "type": "minecraft:item",
-          "name": "guogaology:berry_guogao"
-        },
-        {
-          "type": "minecraft:item",
-          "name": "guogaology:lime_guogao"
-        },
-        {
-          "type": "minecraft:item",
-          "name": "guogaology:azure_guogao"
+          "name": "guogaology:gummy"
         }
       ]
     }
