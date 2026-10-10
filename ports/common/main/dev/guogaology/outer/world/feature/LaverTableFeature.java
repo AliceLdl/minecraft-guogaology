@@ -195,25 +195,23 @@ public record LaverTableFeature(WeightedList<TemplateEntry> templates, Optional<
       return jar==Blocks.AIR?embossed:jar;
    }
 
+   /** 0.5.17（用户要求）：紫菜桌上**每一块桌板**上方各有 **1% 的独立概率**生成软糖罐。
+    *  与羊毛撞位时**软糖罐优先**：本方法在 {@link #placeWool} 之后执行，直接覆盖羊毛。 */
+   public static final float GUMMY_JAR_CHANCE = 0.01f;
+
    public int placeGummies(WorldGenLevel var1, RandomSource var2, StructureTemplate var3, BlockPos var4, StructurePlaceSettings var5, Block var6) {
       List var7 = tableSurface(var3, var4, var5);
-      int var8 = Math.min(gummyCount(var2), var7.size());
+      Block var8 = tableGummy(var2, var6);
+      int var9 = 0;
 
-      for (int var9 = 0; var9 < var8; var9++) {
-         int var10 = var9 + var2.nextInt(var7.size() - var9);
-         BlockPos var11 = (BlockPos)var7.get(var9);
-         var7.set(var9, (BlockPos)var7.get(var10));
-         var7.set(var10, var11);
+      for (int var10 = 0; var10 < var7.size(); var10++) {
+         if (var2.nextFloat() < GUMMY_JAR_CHANCE) {
+            var1.setBlock(((BlockPos)var7.get(var10)).above(), var8.defaultBlockState(), 2);
+            var9++;
+         }
       }
 
-      int var13 = 0;
-
-      for (int var14 = 0; var14 < var8; var14++) {
-         var1.setBlock(((BlockPos)var7.get(var14)).above(), tableGummy(var2,var6).defaultBlockState(), 2);
-         var13++;
-      }
-
-      return var13;
+      return var9;
    }
 
    public static List<BlockPos> tableSurface(StructureTemplate var0, BlockPos var1, StructurePlaceSettings var2) {

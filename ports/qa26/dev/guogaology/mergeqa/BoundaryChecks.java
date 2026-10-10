@@ -72,13 +72,13 @@ public final class BoundaryChecks {
             check(inner.getBlockState(pos).isAir(),"decoration bridged the coast at "+pos+": "+inner.getBlockState(pos));air++;
         }
         int plain=0;var random=RandomSource.create(36080);
-        // 0.5.11 起，紫菜桌上「素面果糕」那一档改成软糖罐（比例仍是 4/5）
+        // 0.5.12 起紫菜桌上的果糕一律是软糖罐（花面果糕只在软糖罐方块缺失时兜底）
         for(int i=0;i<10000;i++)if(LaverTableFeature.tableGummy(random,GuogaologyBlocks.AMBER_GUOGAO)==GuogaologyBlocks.GUMMY_JAR)plain++;
-        check(plain>7850&&plain<8150,"gummy jar probability: "+plain);
+        check(plain==10000,"every table gummy is a gummy jar: "+plain);
         var world=server.overworld();
         var feature=(LaverTableFeature)world.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE).getValue(GuogaologyMod.id("laver_table")).config();
         var template=world.getStructureManager().get(GuogaologyMod.id("laver_table_7")).orElseThrow();
-        var anchor=new BlockPos(0,240,180);int emittedPlain=0,emittedFace=0,mixed=0;
+        var anchor=new BlockPos(0,240,180);int emittedPlain=0,emittedFace=0,mixed=0,boards=0;
         for(var rotation:Rotation.values()){
             var settings=new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings().setRotation(rotation);
             var top=LaverTableFeature.tableSurface(template,anchor,settings);
@@ -87,10 +87,12 @@ public final class BoundaryChecks {
                 for(var pos:top)world.setBlock(pos.above(),Blocks.AIR.defaultBlockState(),2);
                 int count=feature.placeGummies(world,random,template,anchor,settings,GuogaologyBlocks.AMBER_GUOGAO),a=0,b=0;
                 for(var pos:top){var state=world.getBlockState(pos.above());if(state.is(GuogaologyBlocks.GUMMY_JAR))a++;else if(state.is(GuogaologyBlocks.AMBER_GUOGAO))b++;}
-                check(a+b==count,"table writes exactly its selected gummies");emittedPlain+=a;emittedFace+=b;if(a>0&&b>0)mixed++;
+                check(a+b==count,"table writes exactly its selected gummies");emittedPlain+=a;emittedFace+=b;if(a>0&&b>0)mixed++;boards+=top.size();
             }
         }
-        check(emittedPlain>100&&emittedFace>15&&mixed>0,"gummy jars and embossed gummies on mixed tables actually generate");
+        double rate=emittedPlain/(double)boards;
+        check(emittedPlain>0&&emittedFace==0&&mixed==0,"only gummy jars are placed on tables");
+        check(rate>0.004&&rate<0.02,"per-board gummy jar chance is 1%: "+rate);
         for(int i=4;i<8;i++){
             var block=GuogaologyBlocks.ALL_JELLIES[i];
             check(GuogaologyBlocks.TRANSLUCENT.contains(block),"plain gummy transparency registered");
