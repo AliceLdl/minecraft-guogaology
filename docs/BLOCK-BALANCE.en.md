@@ -42,7 +42,7 @@ Four ore tiers now use ordinary hardness 3/3.5/4/4.5 and require an iron pickaxe
 | fffZ Missing Definition | `fffz_trace` | 25 | 0.1 | Pickaxe | None | 5 | None | Intact when anchored |
 | FOS Undefined Fragment | `fos_trace` | 25 | 0.1 | Pickaxe | None | 5 | None | Intact when anchored |
 | Guogao Underworld Portal | `fruit_portal` | -1 | 3600000 | None | None | 8 | None | No normal drop |
-| Giant Laver Blade | `giant_laver` | 0.35 | 0.35 | Hoe | None | 0 | Full block | Block itself |
+| Giant Laver Blade | `giant_laver` | 0.35 | 0.35 | Hoe | None | 0 | Full block | Laver Ribbon (5% / 6.25% / 8.33% / 10% with Fortune I–III); the block itself only with Silk Touch |
 | Great Omega Crown | `great_omega_bloom` | 0 | 0 | Hand | None | 3 | None | Block itself |
 | Ω Symbol Branchstone | `great_omega_symbol` | 1.2 | 3 | Pickaxe | Stone | 5 | Full block | Block itself |
 | Heart of Guogao · Lv1 | `guogao_heart` | 25 | 7 | Pickaxe | None | 12 | Full block | Block itself |
